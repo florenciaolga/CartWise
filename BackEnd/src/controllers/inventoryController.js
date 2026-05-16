@@ -14,6 +14,7 @@ const getInventoryItems = async (req, res) => {
         inventory_items.name,
         inventory_items.stock,
         inventory_items.expiration_date,
+        inventory_items.price_per_unit,
         inventory_items.minimum_stock,
         inventory_items.created_at,
         categories.name AS category_name
@@ -94,6 +95,9 @@ const items = itemsResult.rows.map((item) => {
         diffDays >= 0 &&
         diffDays <= 3;
 
+    const total_value =
+    stock * Number(item.price_per_unit);
+
     return {
         ...item,
         stock,
@@ -102,6 +106,7 @@ const items = itemsResult.rows.map((item) => {
         is_out_of_stock,
         is_expired,
         is_expiring_soon,
+        total_value,
     };
     });
 
@@ -142,6 +147,7 @@ const addInventoryItem = async (req, res) => {
       name,
       stock,
       expiration_date,
+      price_per_unit,
       category_id,
     } = req.body;
 
@@ -151,6 +157,7 @@ const addInventoryItem = async (req, res) => {
       !name ||
       stock === undefined ||
       !expiration_date ||
+      price_per_unit === undefined ||
       !category_id
     ) {
       return res.status(400).json({
@@ -167,6 +174,12 @@ const addInventoryItem = async (req, res) => {
     if (stock < 0 || stock > 1000) {
       return res.status(400).json({
         error: "Stock must be between 0-1000",
+      });
+    }
+
+    if (price_per_unit <= 0) {
+      return res.status(400).json({
+        error: "Price per unit must be greater than 0",
       });
     }
 
@@ -194,9 +207,10 @@ const addInventoryItem = async (req, res) => {
         name,
         stock,
         expiration_date,
+        price_per_unit,
         minimum_stock
       )
-      VALUES ($1, $2, $3, $4, $5, $6)
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
       RETURNING *
       `,
       [
@@ -205,7 +219,31 @@ const addInventoryItem = async (req, res) => {
         name,
         stock,
         expiration_date,
+        price_per_unit,
         1,
+      ]
+    );
+
+    await pool.query(
+      `
+      INSERT INTO transactions
+      (
+        user_id,
+        category_id,
+        item_name,
+        quantity,
+        price_per_item,
+        total_price
+      )
+      VALUES ($1, $2, $3, $4, $5, $6)
+      `,
+      [
+        user_id,
+        category_id,
+        name,
+        stock,
+        price_per_unit,
+        stock * price_per_unit,
       ]
     );
 

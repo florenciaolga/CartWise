@@ -80,9 +80,11 @@ CREATE TABLE inventory_items (
     REFERENCES categories(id),
     name VARCHAR(100) NOT NULL,
     stock INTEGER NOT NULL
-    CHECK (stock BETWEEN 1 AND 1000),
+    CHECK (stock BETWEEN 0 AND 1000),
     unit VARCHAR(20),
     expiration_date DATE NOT NULL,
+    price_per_unit INTEGER NOT NULL
+    CHECK (price_per_unit > 0),
     minimum_stock INTEGER DEFAULT 1,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP

@@ -9,12 +9,14 @@ const authRoutes = require("./routes/authRoutes");
 const authMiddleware = require("./middleware/authMiddleware");
 const shoppingRoutes = require("./routes/shoppingRoutes");
 const inventoryRoutes = require("./routes/inventoryRoutes");
+const budgetRoutes = require("./routes/budgetRoutes");
 
 app.use(cors());
 app.use(express.json());
 app.use("/api/auth", authRoutes);
 app.use("/api/shopping", shoppingRoutes);
 app.use("/api/inventory", inventoryRoutes);
+app.use("/api/budgets", budgetRoutes);
 
 app.get("/", async (req, res) => {
   try {
