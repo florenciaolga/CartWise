@@ -234,7 +234,7 @@ function AddItemModal({ categories, onClose, onAdded }) {
                 type="number"
                 min="1"
                 placeholder="e.g. 15000"
-                className="w-full rounded-xl border border-[#E5E7EB] px-4 py-3 text-sm text-[#2D3335] outline-none focus:border-[#7E8E21] transition-colors"
+                className="no-spinner w-full rounded-xl border border-[#E5E7EB] px-4 py-3 text-sm text-[#2D3335] outline-none focus:border-[#7E8E21] transition-colors"
                 value={form.price_per_unit}
                 onChange={(e) => setField("price_per_unit", e.target.value)}
               />
@@ -397,30 +397,6 @@ export default function InventoryManager() {
                 ))}
               </div>
             </div>
-
-            {/* Storage Health */}
-            <div>
-              <p className="text-[10px] font-semibold uppercase tracking-widest text-[#9CA3AF] mb-3">Storage Health</p>
-              <div className="flex flex-col items-center">
-                <div className="relative flex items-center justify-center">
-                  <svg width="100" height="100" className="-rotate-90">
-                    <circle cx="50" cy="50" r="38" fill="none" stroke="#E5E7EB" strokeWidth="8" />
-                    <circle
-                      cx="50" cy="50" r="38" fill="none"
-                      stroke="#7E8E21" strokeWidth="8"
-                      strokeDasharray={2 * Math.PI * 38}
-                      strokeDashoffset={2 * Math.PI * 38 * (1 - healthPct / 100)}
-                      strokeLinecap="round"
-                      style={{ transition: "stroke-dashoffset 0.6s ease" }}
-                    />
-                  </svg>
-                  <div className="absolute flex flex-col items-center">
-                    <span className="text-lg font-bold text-[#2D3335]">{healthPct}%</span>
-                    <span className="text-[9px] text-[#5A6062] uppercase tracking-wider">{healthLabel}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
 
           {/* ── Main content ──────────────────────────────────────── */}
@@ -487,14 +463,14 @@ export default function InventoryManager() {
             <div className="rounded-2xl border border-[#E5E7EB] bg-white overflow-hidden">
               <div className="flex items-center justify-between px-5 py-4 border-b border-[#F3F4EE]">
                 <p className="text-base font-semibold text-[#2D3335]">In-Stock Essentials</p>
-                <div className="flex gap-2">
+                {/* <div className="flex gap-2">
                   <button className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#E5E7EB] text-[#475569] hover:bg-[#F9FAF5] transition-colors">
                     <MdFilterList size={16} />
                   </button>
                   <button className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#E5E7EB] text-[#475569] hover:bg-[#F9FAF5] transition-colors">
                     <MdSort size={16} />
                   </button>
-                </div>
+                </div> */}
               </div>
 
               {/* Table header */}

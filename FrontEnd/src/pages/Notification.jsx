@@ -65,21 +65,19 @@ function getNotifContent(notif) {
         title: "Budget Alert: Monthly Cap",
         body: `You have reached ${notif.percentage_used?.toFixed(0)}% of your monthly ${notif.category_name} budget. Consider reviewing your upcoming pantry needs.`,
         primaryLabel: "Review Budget",
-        primaryAction: "budget",
+        primaryAction: "budget-tracker",
       };
     case "low_stock":
       return {
         title: "Low Stock: Pantry Essentials",
         body: `${notif.item_name} is running low. Only ${notif.stock} remaining in your current inventory.`,
         primaryLabel: "Add to List",
-        primaryAction: "shopping",
-        secondaryLabel: "Dismiss",
+        primaryAction: "shopping"
       };
     case "expiring_soon":
       return {
         title: "Expiring Soon: Perishables",
         body: `${notif.item_name} expires in ${notif.days_remaining} day${notif.days_remaining !== 1 ? "s" : ""}. Try using it in a recipe today to avoid waste!`,
-        primaryLabel: "Find Recipes",
         primaryAction: null,
       };
     case "expired":
@@ -120,7 +118,7 @@ function NotifCard({ notif, onDismiss }) {
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-4">
             <p className="text-sm font-bold text-[#2D3335]">{content.title}</p>
-            <span className="shrink-0 text-xs text-[#9CA3AF]">{notif._timeAgo || ""}</span>
+            {/* <span className="shrink-0 text-xs text-[#9CA3AF]">{notif._timeAgo || ""}</span> */}
           </div>
           <p className="mt-1 text-sm text-[#5A6062] leading-relaxed max-w-xl">{content.body}</p>
 

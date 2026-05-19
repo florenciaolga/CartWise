@@ -161,9 +161,9 @@ export default function Reports() {
               <div className="rounded-2xl border border-[#E5E7EB] bg-white overflow-hidden">
                 <div className="flex items-center justify-between px-6 py-5 border-b border-[#F3F4EE]">
                   <p className="text-lg font-bold text-[#2D3335]">Most Purchased Items</p>
-                  <button className="flex items-center gap-1 text-sm font-semibold text-[#7E8E21] hover:text-[#4A541F] transition-colors">
+                  {/* <button className="flex items-center gap-1 text-sm font-semibold text-[#7E8E21] hover:text-[#4A541F] transition-colors">
                     View Full History <MdChevronRight size={18}/>
-                  </button>
+                  </button> */}
                 </div>
 
                 {/* Table header */}
