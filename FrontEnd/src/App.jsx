@@ -4,6 +4,7 @@ import SignInPage from "./pages/SignInPage";
 import Dashboard from "./pages/DashboardPage";
 import BudgetTracker from "./pages/BudgetTracker";
 import Inventory from "./pages/Inventory";
+import Reports from "./pages/Reports";
 // import DashboardPage from "./pages/DashboardPage";
 
 function App() {
@@ -16,6 +17,7 @@ function App() {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/budget-tracker" element={<BudgetTracker />} />
         <Route path="/inventory" element={<Inventory />} />
+        <Route path="/reports" element={<Reports />} />
         
         {/* <Route path="/dashboard" element={<DashboardPage />} /> */}
       </Routes>
