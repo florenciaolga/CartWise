@@ -10,8 +10,10 @@ import CategoryTabs from "../components/shopping/CategoryTabs";
 import ListSummary from "../components/shopping/ListSummary";
 import AddItemModal from "../components/modal/AddItemModal";
 import { rupiah } from "../utils/formatter";
+import { useNavigate } from "react-router-dom";
 
 export default function ShoppingListPage() {
+  const navigate = useNavigate();
   const [categories, setCategories]     = useState([]);
   const [lowStockItems, setLowStockItems] = useState([]);
 
@@ -176,7 +178,7 @@ export default function ShoppingListPage() {
                   <p className="text-xs text-[#ACACAC]">All stocked up! 🎉</p>
                 )}
               </div>
-              <button className="mt-4 w-full text-center text-xs font-bold text-[#7E8E21] hover:underline transition">
+              <button onClick={() => navigate("/inventory")} className="mt-4 w-full text-center text-xs font-bold text-[#7E8E21] hover:underline transition">
                 View Full Inventory
               </button>
             </div>

@@ -1,7 +1,10 @@
 import TransactionRow from "../ui/TransactionRow";
 import { formatDate } from "../../utils/date";
+import { useNavigate } from "react-router-dom";
+
 
 export default function TransactionsCard({ transactions }) {
+  const navigate = useNavigate()
   return (
     <div className="col-span-2 rounded-3xl bg-white p-7 shadow-sm border border-gray-100">
       <p className="text-[1.3rem] mb-5 font-semibold text-[#2D3335]">
@@ -26,8 +29,8 @@ export default function TransactionsCard({ transactions }) {
       </div>
 
       <div className="mt-5 border-t border-gray-100 pt-4 text-center">
-        <button className="text-sm font-bold text-[#7E8E21] hover:underline transition">
-          View Full History
+        <button onClick={() => navigate("/reports")} className="text-sm font-bold text-[#7E8E21] hover:underline transition">
+          View Reports
         </button>
       </div>
     </div>
