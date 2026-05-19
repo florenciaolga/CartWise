@@ -291,7 +291,7 @@ export default function BudgetTracker() {
               )}
 
               {/* Spending Analytics Bar Chart */}
-              <div className="rounded-2xl border border-[#E5E7EB] bg-white p-6">
+              {/* <div className="rounded-2xl border border-[#E5E7EB] bg-white p-6">
                 <div className="flex items-center justify-between mb-1">
                   <div>
                     <p className="text-base font-semibold text-[#2D3335]">Spending Analytics</p>
@@ -340,7 +340,7 @@ export default function BudgetTracker() {
                     ))
                   )}
                 </div>
-              </div>
+              </div> */}
 
             </div>
           )}

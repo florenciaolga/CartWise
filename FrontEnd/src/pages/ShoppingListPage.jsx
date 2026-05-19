@@ -4,7 +4,7 @@ import { RiLeafLine } from "react-icons/ri";
 import Sidebar from "../components/sidebar";
 import useShoppingList from "../hooks/useShoppingList";
 import useAddItem from "../hooks/useAddItem";
-import { fetchCategories } from "../api/shoppingApi";
+import { fetchCategories, fetchLowStockItems } from "../api/shoppingApi";
 import ShoppingItem from "../components/shopping/ShoppingItem";
 import CategoryTabs from "../components/shopping/CategoryTabs";
 import ListSummary from "../components/shopping/ListSummary";
@@ -12,7 +12,8 @@ import AddItemModal from "../components/modal/AddItemModal";
 import { rupiah } from "../utils/formatter";
 
 export default function ShoppingListPage() {
-  const [categories, setCategories] = useState([]);
+  const [categories, setCategories]     = useState([]);
+  const [lowStockItems, setLowStockItems] = useState([]);
 
   const {
     items, subtotal, totalItems, loading,
@@ -30,15 +31,29 @@ export default function ShoppingListPage() {
       .catch(() => setCategories([]));
   }, []);
 
+  // Load inventory items with stock === 1 and re-fetch whenever the
+  // shopping list refreshes (i.e. after a checkout clears purchased items).
+  function loadLowStock() {
+    fetchLowStockItems()
+      .then((data) => setLowStockItems(Array.isArray(data) ? data : []))
+      .catch(() => setLowStockItems([]));
+  }
+
+  useEffect(() => {
+    loadLowStock();
+  }, []);
+
+  // Called by ListSummary after a successful checkout:
+  // refetch the shopping list AND refresh the low-stock panel.
+  function handleCheckout() {
+    refetch();
+    loadLowStock();
+  }
+
   const unpurchased = items.filter((i) => !i.is_purchased);
   const purchased   = items.filter((i) => i.is_purchased);
 
   const remaining = unpurchased.length;
-
-  const lowStockItems = [
-    { name: "Milk" },
-    { name: "Large Eggs" },
-  ];
 
   return (
     <div className="flex h-screen w-full bg-[#F4F6EE] font-manrope overflow-hidden">
@@ -136,43 +151,33 @@ export default function ShoppingListPage() {
           </div>
 
           <div className="w-[240px] shrink-0 flex flex-col gap-5">
-            <ListSummary items={items} subtotal={subtotal} />
+            {/* Pass onCheckout so ListSummary can trigger a full refresh */}
+            <ListSummary items={items} subtotal={subtotal} onCheckout={handleCheckout} />
 
             <div className="rounded-3xl bg-white p-5 border border-gray-100 shadow-sm">
               <p className="text-sm font-bold text-[#2D3335] mb-4">Running Low</p>
               <div className="flex flex-col gap-4">
-                {lowStockItems.map((item) => (
-                  <div key={item.name} className="flex items-center gap-3">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#F4F6EE]">
-                      <RiLeafLine size={16} className="text-[#4A541F]" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-semibold text-[#2D3335]">{item.name}</p>
-                      <div className="mt-1 h-1.5 w-full rounded-full bg-gray-100">
-                        <div className="h-full w-[20%] rounded-full bg-red-400" />
+                {lowStockItems.length > 0 ? (
+                  lowStockItems.map((item) => (
+                    <div key={item.id} className="flex items-center gap-3">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#F4F6EE]">
+                        <RiLeafLine size={16} className="text-[#4A541F]" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-semibold text-[#2D3335]">{item.name}</p>
+                        <div className="mt-1 h-1.5 w-full rounded-full bg-gray-100">
+                          {/* stock is always 1 here, so bar is always at ~10% */}
+                          <div className="h-full w-[10%] rounded-full bg-red-400" />
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  ))
+                ) : (
+                  <p className="text-xs text-[#ACACAC]">All stocked up! 🎉</p>
+                )}
               </div>
               <button className="mt-4 w-full text-center text-xs font-bold text-[#7E8E21] hover:underline transition">
                 View Full Inventory
-              </button>
-            </div>
-
-            <div className="rounded-3xl bg-[#FAFAF0] border border-[#e8f0c8] p-5">
-              <p className="flex items-center gap-1.5 text-sm font-bold text-[#4A541F] mb-2">
-                ✦ Smart Suggestions
-              </p>
-              <p className="text-xs text-[#5A6062] leading-relaxed">
-                You usually buy <strong className="text-[#4A541F]">Greek Yogurt</strong> on Tuesdays.
-                Would you like to add it?
-              </p>
-              <button
-                onClick={addItem.open}
-                className="mt-4 w-full rounded-full border border-[#4A541F] py-2 text-xs font-bold text-[#4A541F] hover:bg-[#4A541F] hover:text-[#E8FFE8] transition"
-              >
-                Add to list
               </button>
             </div>
           </div>

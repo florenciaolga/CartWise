@@ -334,6 +334,85 @@ const getCategories = async (req, res) => {
   }
 };
 
+// POST /shopping/checkout
+// Moves all purchased shopping_items into inventory_items, then deletes them.
+// Wrapped in a DB transaction so it either fully succeeds or fully rolls back.
+const checkoutShoppingList = async (req, res) => {
+  const user_id = req.user.id;
+  const client = await pool.connect();
+
+  try {
+    // Default expiry: 30 days from today
+    const defaultExpiry = new Date();
+    defaultExpiry.setDate(defaultExpiry.getDate() + 30);
+    const expiryDate = defaultExpiry.toISOString().split("T")[0];
+
+    await client.query("BEGIN");
+
+    // 1. Fetch all purchased items for this user
+    const { rows: purchased } = await client.query(
+      `
+      SELECT *
+      FROM shopping_items
+      WHERE user_id = $1
+        AND is_purchased = TRUE
+      `,
+      [user_id]
+    );
+
+    if (purchased.length === 0) {
+      await client.query("ROLLBACK");
+      return res.status(400).json({
+        error: "No purchased items to check out.",
+      });
+    }
+
+    // 2. Insert each purchased item into inventory_items
+    for (const item of purchased) {
+      await client.query(
+        `
+        INSERT INTO inventory_items
+          (user_id, category_id, name, stock, price_per_unit, expiration_date)
+        VALUES ($1, $2, $3, $4, $5, $6)
+        `,
+        [
+          user_id,
+          item.category_id,
+          item.name,
+          item.quantity,
+          item.price_per_unit,
+          expiryDate,
+        ]
+      );
+    }
+
+    // 3. Delete the purchased items from shopping_items
+    await client.query(
+      `
+      DELETE FROM shopping_items
+      WHERE user_id = $1
+        AND is_purchased = TRUE
+      `,
+      [user_id]
+    );
+
+    await client.query("COMMIT");
+
+    res.json({
+      message: "Checkout successful",
+      checked_out: purchased.length,
+    });
+  } catch (error) {
+    await client.query("ROLLBACK");
+    console.error("Checkout error:", error);
+    res.status(500).json({
+      error: "Checkout failed. Please try again.",
+    });
+  } finally {
+    client.release();
+  }
+};
+
 module.exports = {
   getShoppingItems,
   addShoppingItem,
@@ -341,4 +420,5 @@ module.exports = {
   togglePurchasedStatus,
   deleteShoppingItem,
   getCategories,
+  checkoutShoppingList,
 };

@@ -17,3 +17,19 @@ export const deleteShoppingItem = (id) =>
 
 export const fetchCategories = () =>
   api.get("/shopping/categories/all").then((res) => res.data);
+
+/**
+ * Moves all purchased shopping-list items into inventory,
+ * then deletes them from the shopping list.
+ * Expects the backend to handle the transfer atomically.
+ */
+export const checkoutShoppingList = () =>
+  api.post("/shopping/checkout").then((res) => res.data);
+
+/**
+ * Returns inventory items whose stock === 1 (running low).
+ */
+export const fetchLowStockItems = () =>
+  api.get("/inventory", { params: { low_stock: true } }).then((res) =>
+    (res.data.items || []).filter((item) => item.stock === 1)
+  );
