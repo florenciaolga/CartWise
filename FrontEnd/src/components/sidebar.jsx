@@ -6,7 +6,7 @@ import { getUser } from "../services/authService";
 
 const NAV_ITEMS = [
   { icon: MdDashboard,         label: "Dashboard",      path: "/dashboard"     },
-  { icon: MdShoppingCart,      label: "Shopping List",  path: "/shopping"      },
+  { icon: MdShoppingCart,      label: "Shopping List",  path: "/shopping" },
   { icon: MdAttachMoney,       label: "Budget Tracker", path: "/budget-tracker"},
   { icon: MdInventory2,        label: "Inventory",      path: "/inventory"     },
   { icon: MdBarChart,          label: "Reports",        path: "/reports"       },

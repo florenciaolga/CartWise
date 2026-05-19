@@ -7,7 +7,7 @@ import Inventory from "./pages/Inventory";
 import Reports from "./pages/Reports";
 import Notification from "./pages/Notification";
 import Settings from "./pages/Settings";
-// import DashboardPage from "./pages/DashboardPage";
+import ShoppingList from "./pages/ShoppingListPage";
 
 function App() {
   return (
@@ -23,8 +23,7 @@ function App() {
         <Route path="/reports" element={<Reports />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="/notification" element={<Notification />} />
-        
-        {/* <Route path="/dashboard" element={<DashboardPage />} /> */}
+        <Route path="/shopping" element={<ShoppingList />} />
       </Routes>
     </BrowserRouter>
   );
