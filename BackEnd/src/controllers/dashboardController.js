@@ -12,7 +12,6 @@ const getDashboardData = async (req, res) => {
     const year =
       currentDate.getFullYear();
 
-    // TOTAL BUDGET
     const budgetResult = await pool.query(
       `
       SELECT
@@ -53,6 +52,54 @@ const getDashboardData = async (req, res) => {
       spendingResult.rows[0].total_spent
     );
 
+    let previousMonth = month - 1;
+
+    let previousYear = year;
+
+    if (previousMonth === 0) {
+      previousMonth = 12;
+      previousYear--;
+    }
+
+    const previousSpendingResult =
+      await pool.query(
+        `
+        SELECT
+          COALESCE(
+            SUM(total_price),
+            0
+          ) AS previous_spending
+        FROM transactions
+        WHERE user_id = $1
+        AND EXTRACT(MONTH FROM transaction_date) = $2
+        AND EXTRACT(YEAR FROM transaction_date) = $3
+        `,
+        [
+          user_id,
+          previousMonth,
+          previousYear,
+        ]
+      );
+
+    const previous_spending = Number(
+      previousSpendingResult.rows[0]
+        .previous_spending
+    );
+
+    let spending_change_percentage = 0;
+
+    if (previous_spending > 0) {
+      spending_change_percentage =
+        Number(
+          (
+            ((total_spent -
+              previous_spending) /
+              previous_spending) *
+            100
+          ).toFixed(1)
+        );
+    }
+
     const total_remaining =
       total_budget - total_spent;
 
@@ -67,7 +114,6 @@ const getDashboardData = async (req, res) => {
           )
         : 0;
 
-    // EXPIRING SOON
     const expiringSoonResult =
       await pool.query(
         `
@@ -84,7 +130,6 @@ const getDashboardData = async (req, res) => {
         [user_id]
       );
 
-    // SHOPPING PENDING
     const shoppingPendingResult =
       await pool.query(
         `
@@ -102,7 +147,6 @@ const getDashboardData = async (req, res) => {
           .pending_count
       );
 
-    // LOW STOCK
     const lowStockResult =
       await pool.query(
         `
@@ -119,7 +163,6 @@ const getDashboardData = async (req, res) => {
         .low_stock_count
     );
 
-    // RECENT TRANSACTIONS
     const recentTransactionsResult =
       await pool.query(
         `
@@ -145,6 +188,7 @@ const getDashboardData = async (req, res) => {
         total_spent,
         total_remaining,
         percentage_used,
+        spending_change_percentage,
       },
 
       expiring_soon:
