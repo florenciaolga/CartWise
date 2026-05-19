@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { fetchDashboard } from "../api/dashboardApi";
 
 export default function useDashboard() {
@@ -6,7 +6,8 @@ export default function useDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
+  const load = useCallback(() => {
+    setLoading(true);
     fetchDashboard()
       .then(setDashboardData)
       .catch((err) => {
@@ -16,5 +17,7 @@ export default function useDashboard() {
       .finally(() => setLoading(false));
   }, []);
 
-  return { dashboardData, loading, error };
+  useEffect(() => { load(); }, [load]);
+
+  return { dashboardData, loading, error, refetch: load };
 }
