@@ -52,8 +52,8 @@ function ItemRow({ item, onUpdateStock, onDelete }) {
         body: JSON.stringify({ stock: newStock }),
       });
       onUpdateStock();
-    } catch (e) {
-      setLocalStock(localStock);
+    } catch {
+      setLocalStock(item.stock);
     } finally {
       setUpdating(false);
     }
@@ -63,15 +63,9 @@ function ItemRow({ item, onUpdateStock, onDelete }) {
 
   return (
     <div className="flex items-center gap-4 px-4 py-3.5 border-b border-[#F3F4EE] last:border-0 hover:bg-[#FAFBF6] transition-colors group">
-      {/* Image placeholder */}
-      <div className="h-12 w-12 shrink-0 rounded-xl overflow-hidden bg-[#E8EDD4]">
-        {item.image_url ? (
-          <img src={item.image_url} alt={item.name} className="h-full w-full object-cover" />
-        ) : (
-          <div className="h-full w-full flex items-center justify-center text-[#7E8E21] text-xs font-bold">
-            {item.name?.slice(0, 2).toUpperCase()}
-          </div>
-        )}
+      {/* Initials avatar */}
+      <div className="h-12 w-12 shrink-0 rounded-xl overflow-hidden bg-[#E8EDD4] flex items-center justify-center text-[#7E8E21] text-xs font-bold">
+        {item.name?.slice(0, 2).toUpperCase()}
       </div>
 
       {/* Name & category */}
@@ -79,10 +73,7 @@ function ItemRow({ item, onUpdateStock, onDelete }) {
         <p className={`text-sm font-semibold ${isExpired ? "line-through text-[#9CA3AF]" : "text-[#2D3335]"}`}>
           {item.name}
         </p>
-        <p className="text-xs text-[#5A6062]">
-          {item.category_name}
-          {item.unit ? ` • ${item.unit}` : ""}
-        </p>
+        <p className="text-xs text-[#5A6062]">{item.category_name}</p>
       </div>
 
       {/* Quantity controls */}
@@ -116,7 +107,7 @@ function ItemRow({ item, onUpdateStock, onDelete }) {
         <StatusBadge item={item} />
       </div>
 
-      {/* Delete */}
+      {/* Delete on hover */}
       <button
         onClick={() => onDelete(item.id)}
         className="opacity-0 group-hover:opacity-100 transition-opacity ml-2 text-[#CBD5E1] hover:text-red-400"
@@ -127,6 +118,7 @@ function ItemRow({ item, onUpdateStock, onDelete }) {
   );
 }
 
+// ─── Add Item Modal ───────────────────────────────────────────────────────────
 function AddItemModal({ categories, onClose, onAdded }) {
   const [form, setForm] = useState({
     name: "",
@@ -143,10 +135,13 @@ function AddItemModal({ categories, onClose, onAdded }) {
   }
 
   async function handleSubmit() {
-    if (!form.name.trim()) { setError("Grocery name is required."); return; }
+    if (!form.name.trim())         { setError("Grocery name is required."); return; }
+    if (!form.expiration_date)     { setError("Expiry date is required."); return; }
+    if (!form.category_id)         { setError("Please select a category."); return; }
     if (!form.price_per_unit || isNaN(form.price_per_unit) || Number(form.price_per_unit) <= 0) {
       setError("Price per unit must be greater than 0."); return;
     }
+
     setSaving(true);
     setError("");
     try {
@@ -154,11 +149,11 @@ function AddItemModal({ categories, onClose, onAdded }) {
         method: "POST",
         headers: getAuthHeaders(),
         body: JSON.stringify({
-          name: form.name.trim(),
-          stock: Number(form.stock) || 1,
-          expiration_date: form.expiration_date || undefined,
-          price_per_unit: Number(form.price_per_unit),
-          category_id: Number(form.category_id),
+          name:            form.name.trim(),
+          stock:           Number(form.stock) || 1,
+          expiration_date: form.expiration_date,
+          price_per_unit:  Number(form.price_per_unit),
+          category_id:     Number(form.category_id),
         }),
       });
       if (!res.ok) {
@@ -223,9 +218,14 @@ function AddItemModal({ categories, onClose, onAdded }) {
                 value={form.category_id}
                 onChange={(e) => setField("category_id", e.target.value)}
               >
-                {categories.map((c) => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
-                ))}
+                {/* Categories fetched from /api/categories */}
+                {categories.length === 0 ? (
+                  <option disabled value="">Loading categories…</option>
+                ) : (
+                  categories.map((c) => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))
+                )}
               </select>
             </div>
             <div>
@@ -264,41 +264,41 @@ function AddItemModal({ categories, onClose, onAdded }) {
   );
 }
 
-const SIDEBAR_CATEGORIES = ["All Items", "Pantry", "Refrigerator", "Home Care"];
+// ─── Main Page ────────────────────────────────────────────────────────────────
+export default function InventoryManager() {
+  const [items, setItems]               = useState([]);
+  const [meta, setMeta]                 = useState({ total_items: 0, low_stock_count: 0, expired_count: 0, expiring_soon_count: 0 });
+  // Categories are fixed in the DB (seeded at setup), no need to fetch
+  const modalCategories = [
+    { id: 1, name: "Groceries" },
+    { id: 2, name: "Personal Care" },
+    { id: 3, name: "Beverages" },
+    { id: 4, name: "Cleaning Supplies" },
+    { id: 5, name: "Household" },
+  ];
 
-export default function Inventor() {
-  const [items, setItems] = useState([]);
-  const [meta, setMeta] = useState({ total_items: 0, low_stock_count: 0, expired_count: 0, expiring_soon_count: 0 });
-  const [categories, setCategories] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
+  const [loading, setLoading]               = useState(true);
+  const [search, setSearch]                 = useState("");
   const [activeCategory, setActiveCategory] = useState("All Items");
-  const [showAdd, setShowAdd] = useState(false);
+  const [showAdd, setShowAdd]               = useState(false);
 
+  // Fetch inventory items (re-runs on search change with 300ms debounce)
   const fetchInventory = useCallback(async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams();
       if (search) params.set("search", search);
 
-      const [invRes, catRes] = await Promise.all([
-        fetch(`${BASE_URL}/inventory?${params}`, { headers: getAuthHeaders() }),
-        fetch(`${BASE_URL}/categories`, { headers: getAuthHeaders() }).catch(() => ({ ok: false })),
-      ]);
-
-      if (invRes.ok) {
-        const d = await invRes.json();
+      const res = await fetch(`${BASE_URL}/inventory?${params}`, { headers: getAuthHeaders() });
+      if (res.ok) {
+        const d = await res.json();
         setItems(d.items || []);
         setMeta({
-          total_items: d.total_items ?? 0,
-          low_stock_count: d.low_stock_count ?? 0,
-          expired_count: d.expired_count ?? 0,
+          total_items:        d.total_items        ?? 0,
+          low_stock_count:    d.low_stock_count    ?? 0,
+          expired_count:      d.expired_count      ?? 0,
           expiring_soon_count: d.expiring_soon_count ?? 0,
         });
-      }
-      if (catRes.ok) {
-        const d = await catRes.json();
-        setCategories(Array.isArray(d) ? d : d.categories || []);
       }
     } catch (e) {
       console.error(e);
@@ -318,37 +318,45 @@ export default function Inventor() {
     fetchInventory();
   }
 
-  // Client-side category filter for sidebar categories
-  const filteredItems = items.filter((item) => {
-    if (activeCategory === "All Items") return true;
-    const map = { Pantry: "Pantry", Refrigerator: "Refrigerator", "Home Care": "Home Care" };
-    return item.category_name === map[activeCategory] || item.category_name?.toLowerCase().includes(activeCategory.toLowerCase());
-  });
+  // Sidebar categories — derived from actual items in the inventory
+  // (only shows categories the user actually has items in)
+  const sidebarCategories = [
+    "All Items",
+    ...Array.from(new Set(items.map((i) => i.category_name).filter(Boolean))),
+  ];
 
-  // Category counts
-  const catCounts = {
-    "All Items": meta.total_items,
-    Pantry: items.filter((i) => i.category_name === "Pantry").length,
-    Refrigerator: items.filter((i) => i.category_name === "Refrigerator" || i.category_name === "Fridge").length,
-    "Home Care": items.filter((i) => i.category_name === "Home Care" || i.category_name === "Cleaning").length,
-  };
+  // Filter items by active sidebar category
+  const filteredItems = activeCategory === "All Items"
+    ? items
+    : items.filter((i) => i.category_name === activeCategory);
 
-  // Storage health: 100% optimal if no expired/out-of-stock
+  // Count per sidebar category
+  const catCounts = Object.fromEntries(
+    sidebarCategories.map((cat) => [
+      cat,
+      cat === "All Items"
+        ? meta.total_items
+        : items.filter((i) => i.category_name === cat).length,
+    ])
+  );
+
+  // Storage health circle
   const healthPct = meta.total_items > 0
-    ? Math.max(0, Math.round(100 - ((meta.expired_count / meta.total_items) * 100)))
+    ? Math.max(0, Math.round(100 - (meta.expired_count / meta.total_items) * 100))
     : 100;
   const healthLabel = healthPct === 100 ? "Optimal" : healthPct >= 70 ? "Good" : "Needs Attention";
 
-  // Expiring soon names
+  // Alert banner names
+  const expiredItems      = items.filter((i) => i.is_expired).map((i) => i.name);
   const expiringSoonItems = items.filter((i) => i.is_expiring_soon && !i.is_expired).map((i) => i.name);
-  const expiredItems = items.filter((i) => i.is_expired).map((i) => i.name);
 
   return (
     <div className="flex h-screen bg-[#F5F6F0] overflow-hidden">
       <Sidebar />
 
       <div className="flex flex-1 flex-col overflow-hidden">
-        {/* Top bar */}
+
+        {/* Search bar */}
         <div className="flex items-center border-b border-[#E5E7EB] bg-white px-6 py-3">
           <div className="flex flex-1 items-center gap-2 rounded-full bg-[#F3F4EE] px-4 py-2 max-w-xs">
             <MdSearch size={16} className="text-[#9CA3AF]" />
@@ -363,14 +371,15 @@ export default function Inventor() {
         </div>
 
         <div className="flex flex-1 overflow-hidden">
-          {/* Left sidebar */}
+
+          {/* ── Left panel ─────────────────────────────────────────── */}
           <div className="w-56 shrink-0 border-r border-[#E5E7EB] bg-white flex flex-col gap-6 p-5 overflow-y-auto">
 
-            {/* Categories */}
+            {/* Categories — real data from items */}
             <div>
               <p className="text-[10px] font-semibold uppercase tracking-widest text-[#9CA3AF] mb-3">Categories</p>
               <div className="flex flex-col gap-0.5">
-                {SIDEBAR_CATEGORIES.map((cat) => (
+                {sidebarCategories.map((cat) => (
                   <button
                     key={cat}
                     onClick={() => setActiveCategory(cat)}
@@ -414,7 +423,7 @@ export default function Inventor() {
             </div>
           </div>
 
-          {/* Main content */}
+          {/* ── Main content ──────────────────────────────────────── */}
           <div className="flex-1 overflow-y-auto px-8 py-8">
             <div className="flex items-start justify-between mb-6">
               <div>
@@ -527,13 +536,10 @@ export default function Inventor() {
         </div>
       </div>
 
+      {/* Add Item Modal */}
       {showAdd && (
         <AddItemModal
-          categories={categories.length > 0 ? categories : [
-            { id: 1, name: "Groceries" },
-            { id: 2, name: "Household" },
-            { id: 3, name: "Personal" },
-          ]}
+          categories={modalCategories}
           onClose={() => setShowAdd(false)}
           onAdded={fetchInventory}
         />
