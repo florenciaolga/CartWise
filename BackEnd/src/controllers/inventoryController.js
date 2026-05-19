@@ -16,6 +16,7 @@ const getInventoryItems = async (req, res) => {
         inventory_items.expiration_date,
         inventory_items.price_per_unit,
         inventory_items.minimum_stock,
+        inventory_items.category_id,
         inventory_items.created_at,
         categories.name AS category_name
       FROM inventory_items
@@ -263,23 +264,27 @@ const addInventoryItem = async (req, res) => {
 const updateInventoryStock = async (req, res) => {
   try {
     const user_id = req.user.id;
-
     const item_id = req.params.id;
 
-    const { stock } = req.body;
+    const {
+      name,
+      stock,
+      expiration_date,
+      category_name,
+    } = req.body;
 
-    if (stock === undefined) {
+    if (
+      !name ||
+      stock === undefined ||
+      !expiration_date ||
+      !category_name
+    ) {
       return res.status(400).json({
-        error: "Stock is required",
+        error: "All fields are required",
       });
     }
 
-    if (stock < 0 || stock > 1000) {
-      return res.status(400).json({
-        error: "Stock must be between 0-1000",
-      });
-    }
-
+    // cek item
     const existingItem = await pool.query(
       `
       SELECT *
@@ -296,20 +301,48 @@ const updateInventoryStock = async (req, res) => {
       });
     }
 
+    // cari category berdasarkan nama
+    const categoryResult = await pool.query(
+      `
+      SELECT id
+      FROM categories
+      WHERE name = $1
+      `,
+      [category_name]
+    );
+
+    if (categoryResult.rows.length === 0) {
+      return res.status(400).json({
+        error: "Category not found",
+      });
+    }
+
+    const category_id = categoryResult.rows[0].id;
+
+    // update
     const updatedItem = await pool.query(
       `
       UPDATE inventory_items
       SET
-        stock = $1,
+        name = $1,
+        stock = $2,
+        expiration_date = $3,
+        category_id = $4,
         updated_at = CURRENT_TIMESTAMP
-      WHERE id = $2
+      WHERE id = $5
       RETURNING *
       `,
-      [stock, item_id]
+      [
+        name,
+        stock,
+        expiration_date,
+        category_id,
+        item_id,
+      ]
     );
 
     res.json({
-      message: "Inventory stock updated successfully",
+      message: "Inventory updated successfully",
       item: updatedItem.rows[0],
     });
   } catch (error) {
