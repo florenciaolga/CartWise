@@ -1,45 +1,30 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
-import { MdPerson, MdLock, MdLogout, MdCheck } from "react-icons/md";
+import { MdLogout, MdCheck } from "react-icons/md";
+import { getUser as getStoredUser, getToken, clearSession } from "../services/authService";
 
 const BASE_URL = "http://localhost:3000/api";
 
 function getAuthHeaders() {
-  const token =
-    localStorage.getItem("token") ||
-    sessionStorage.getItem("token");
   return {
     "Content-Type": "application/json",
-    Authorization: `Bearer ${token}`,
+    Authorization: `Bearer ${getToken()}`,
   };
 }
 
 function getUser() {
-  try {
-    return (
-      JSON.parse(localStorage.getItem("user")) ||
-      JSON.parse(sessionStorage.getItem("user")) ||
-      {}
-    );
-  } catch {
-    return {};
-  }
+  return getStoredUser() || {};
 }
 
 function updateStoredUser(updates) {
-  // Update whichever storage has the user
-  const lsUser = localStorage.getItem("user");
-  const ssUser = sessionStorage.getItem("user");
-  if (lsUser) {
-    localStorage.setItem("user", JSON.stringify({ ...JSON.parse(lsUser), ...updates }));
-  }
-  if (ssUser) {
-    sessionStorage.setItem("user", JSON.stringify({ ...JSON.parse(ssUser), ...updates }));
-  }
+  const current = getUser();
+  localStorage.setItem("user", JSON.stringify({ ...current, ...updates }));
+  // Tell Sidebar to re-read localStorage immediately (no page refresh needed)
+  window.dispatchEvent(new Event("userUpdated"));
 }
 
-// ─── Section Card wrapper ─────────────────────────────────────────────────────
+// ─── Section wrapper ──────────────────────────────────────────────────────────
 function Section({ title, subtitle, children }) {
   return (
     <div className="rounded-2xl border border-[#E5E7EB] bg-white p-6">
@@ -62,6 +47,7 @@ function ProfileSection() {
 
   const initials = name
     .split(" ")
+    .filter(Boolean)
     .map((n) => n[0])
     .slice(0, 2)
     .join("")
@@ -69,43 +55,28 @@ function ProfileSection() {
 
   async function handleSave() {
     if (!name.trim()) { setError("Name cannot be empty."); return; }
-    if (name.trim() === (user.name || "")) { setError("No changes made."); return; }
+    if (name.trim() === (user.name || "").trim()) { setError("No changes made."); return; }
 
     setSaving(true);
     setError("");
     try {
-      // Try PATCH /api/users/me — ask your friend if this endpoint exists
-      const res = await fetch(`${BASE_URL}/users/me`, {
+      // Try to update on backend if endpoint exists
+      await fetch(`${BASE_URL}/users/me`, {
         method: "PATCH",
         headers: getAuthHeaders(),
         body: JSON.stringify({ name: name.trim() }),
-      });
-
-      if (res.ok) {
-        updateStoredUser({ name: name.trim() });
-        setSuccess(true);
-        setTimeout(() => setSuccess(false), 2500);
-      } else {
-        // If endpoint doesn't exist yet, just update localStorage only
-        updateStoredUser({ name: name.trim() });
-        setSuccess(true);
-        setTimeout(() => setSuccess(false), 2500);
-      }
-    } catch {
-      // Offline / no endpoint — still update localStorage so sidebar reflects it
+      }).catch(() => null); // silently ignore if endpoint doesn't exist yet
+    } finally {
+      // Always update localStorage & trigger sidebar re-render
       updateStoredUser({ name: name.trim() });
+      setSaving(false);
       setSuccess(true);
       setTimeout(() => setSuccess(false), 2500);
-    } finally {
-      setSaving(false);
     }
   }
 
   return (
-    <Section
-      title="Profile"
-      subtitle="Update your display name."
-    >
+    <Section title="Profile" subtitle="Update your display name.">
       <div className="flex items-center gap-4 mb-6">
         <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-[#4A541F] text-lg font-bold text-[#E8FFE8]">
           {initials || "?"}
@@ -145,13 +116,7 @@ function ProfileSection() {
           disabled={saving}
           className="flex items-center gap-2 self-start rounded-xl bg-[#4A541F] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#3a4118] disabled:opacity-60 transition-colors"
         >
-          {success ? (
-            <><MdCheck size={16} /> Saved!</>
-          ) : saving ? (
-            "Saving…"
-          ) : (
-            "Save Changes"
-          )}
+          {success ? <><MdCheck size={16} /> Saved!</> : saving ? "Saving…" : "Save Changes"}
         </button>
       </div>
     </Section>
@@ -164,21 +129,12 @@ function AccountSection() {
   const [showConfirm, setShowConfirm] = useState(false);
 
   function handleLogout() {
-    // Clear both storages — same pattern as saveLoginData
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    sessionStorage.removeItem("token");
-    sessionStorage.removeItem("user");
+    clearSession(); // from authService — clears token, user, rememberDevice
     navigate("/sign-in");
   }
 
   return (
-    <Section
-      title="Account"
-      subtitle="Manage your session."
-    >
       <div className="flex flex-col gap-3 max-w-sm">
-
         {!showConfirm ? (
           <button
             onClick={() => setShowConfirm(true)}
@@ -208,7 +164,6 @@ function AccountSection() {
           </div>
         )}
       </div>
-    </Section>
   );
 }
 
@@ -217,21 +172,16 @@ export default function Settings() {
   return (
     <div className="flex h-screen bg-[#F5F6F0] overflow-hidden">
       <Sidebar />
-
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-2xl mx-auto px-10 py-10">
-
-          {/* Header */}
           <div className="mb-8">
             <h1 className="text-4xl font-bold text-[#2D3335]">Settings</h1>
             <p className="mt-1 text-sm text-[#5A6062]">Manage your account and preferences.</p>
           </div>
-
           <div className="flex flex-col gap-5">
             <ProfileSection />
             <AccountSection />
           </div>
-
         </div>
       </div>
     </div>

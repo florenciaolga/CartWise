@@ -1,6 +1,8 @@
+import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import {MdDashboard, MdAttachMoney, MdShoppingCart, MdInventory2, MdBarChart, MdSettings, MdNotificationsNone} from "react-icons/md";
+import { MdDashboard, MdShoppingCart, MdAttachMoney, MdInventory2, MdBarChart, MdSettings, MdNotificationsNone } from "react-icons/md";
 import { RiWallet3Fill } from "react-icons/ri";
+import { getUser } from "../services/authService";
 
 const NAV_ITEMS = [
   { icon: MdDashboard,         label: "Dashboard",      path: "/dashboard"     },
@@ -29,21 +31,28 @@ export default function Sidebar() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const user = (() => {
-    try { return JSON.parse(localStorage.getItem("user")) || {}; }
-    catch { return {}; }
-  })();
+  // Read user from authService — re-reads on "userUpdated" event dispatched by Settings
+  const [user, setUser] = useState(() => getUser() || {});
 
-  const name = user.name || "Frank Ocean";
+  useEffect(() => {
+    function handleUserUpdated() {
+      setUser(getUser() || {});
+    }
+    window.addEventListener("userUpdated", handleUserUpdated);
+    return () => window.removeEventListener("userUpdated", handleUserUpdated);
+  }, []);
+
+  const name = user.name || "User";
   const initials = name
     .split(" ")
+    .filter(Boolean)
     .map((n) => n[0])
     .slice(0, 2)
     .join("")
     .toUpperCase();
 
   return (
-    <aside className="flex h-screen w-[220px] shrink-0 flex-col justify-between border-r border-[#E5E7EB] bg-[#F8FAF2] px-5 py-6">
+    <aside className="flex h-screen w-55 shrink-0 flex-col justify-between border-r border-[#E5E7EB] bg-[#F8FAF2] px-5 py-6">
       <div>
         <div className="mb-8 flex items-center gap-3 px-4">
           <RiWallet3Fill className="text-2xl text-[#48521D]" />
