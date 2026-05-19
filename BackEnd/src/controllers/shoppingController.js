@@ -384,6 +384,23 @@ const checkoutShoppingList = async (req, res) => {
           expiryDate,
         ]
       );
+
+      await client.query(
+        `
+        INSERT INTO transactions
+          (user_id, category_id, item_name, quantity, price_per_item, total_price)
+        VALUES ($1, $2, $3, $4, $5, $6)
+        `,
+        [
+          user_id,
+          item.category_id,
+          item.name,
+          item.quantity,
+          item.price_per_unit,
+          item.quantity * item.price_per_unit,
+        ]
+      );
+
     }
 
     // 3. Delete the purchased items from shopping_items

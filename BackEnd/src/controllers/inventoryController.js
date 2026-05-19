@@ -344,6 +344,11 @@ const deleteInventoryItem = async (req, res) => {
     }
 
     await pool.query(
+      `DELETE FROM transactions WHERE user_id = $1 AND item_name = $2`,
+      [user_id, existingItem.rows[0].name]
+    );
+
+    await pool.query(
       `
       DELETE FROM inventory_items
       WHERE id = $1

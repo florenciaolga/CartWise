@@ -48,9 +48,6 @@ export default function StatCards({ data }) {
           <h2 className="mt-2 text-[1.5rem] font-bold leading-none text-[#2D3335]">
             {data?.shopping_pending || 0} Items
           </h2>
-          <p className="mt-3 text-xs font-medium text-[#5A6062]">
-            Next trip scheduled: Sat
-          </p>
         </div>
         <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#7E8E21]">
           <RiShoppingCart2Line className="text-xl text-[#B7CA93]" />
@@ -63,11 +60,7 @@ export default function StatCards({ data }) {
           <h2 className="mt-2 text-[1.5rem] font-bold leading-none text-[#2D3335]">
             {data?.inventory_alerts || 0} Low Stock
           </h2>
-          <div className="mt-3 inline-flex rounded-md bg-[#FA746F] px-2 py-1">
-            <span className="text-[10px] font-bold tracking-wide text-[#6E0A12]">
-              ACTION NEEDED
-            </span>
-          </div>
+          
         </div>
         <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#7E8E21]">
           <RiArchiveLine className="text-xl text-[#B7CA93]" />

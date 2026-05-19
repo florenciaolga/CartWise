@@ -30,7 +30,7 @@ export default function ShoppingItem({ item, onToggle, onQuantityChange }) {
           {item.name}
         </p>
         <p className="text-xs text-[#9aa0a6] flex items-center gap-1 mt-0.5">
-          <span>🏷</span> {item.category_name}
+          {item.category_name}
         </p>
         {isPurchased && (
           <p className="text-xs text-[#9aa0a6] mt-0.5">✓ Purchased {item.updated_at ? "recently" : ""}</p>
