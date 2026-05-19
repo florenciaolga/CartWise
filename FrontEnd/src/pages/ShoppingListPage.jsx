@@ -167,7 +167,6 @@ export default function ShoppingListPage() {
                       </div>
                       <div className="flex-1">
                         <p className="text-sm font-semibold text-[#2D3335]">{item.name}</p>
-                        
                       </div>
                     </div>
                   ))

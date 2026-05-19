@@ -60,7 +60,16 @@ export default function StatCards({ data }) {
           <h2 className="mt-2 text-[1.5rem] font-bold leading-none text-[#2D3335]">
             {data?.inventory_alerts || 0} Low Stock
           </h2>
-          
+
+          {data?.inventory_alerts > 0 ? (
+            <span className="text-[12px] font-bold tracking-wide text-[#6E0A12]">
+              ACTION NEEDED
+            </span>
+            ) : (
+            <span className="text-[12px] font-bold tracking-wide text-[#7E8E21]">
+              ALL GOOD
+            </span>
+            )}
         </div>
         <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#7E8E21]">
           <RiArchiveLine className="text-xl text-[#B7CA93]" />

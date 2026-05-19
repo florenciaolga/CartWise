@@ -8,6 +8,7 @@ import {
   MdDelete,
   MdWarning,
   MdError,
+  MdEdit,
 } from "react-icons/md";
 
 const BASE_URL = "http://localhost:3000/api";
@@ -37,84 +38,221 @@ function StatusBadge({ item }) {
 }
 
 function ItemRow({ item, onUpdateStock, onDelete }) {
-  const [localStock, setLocalStock] = useState(item.stock);
-  const [updating, setUpdating] = useState(false);
+  const [showEdit, setShowEdit] = useState(false);
 
-  async function changeStock(delta) {
-    const newStock = Math.max(0, localStock + delta);
-    if (newStock === localStock) return;
-    setUpdating(true);
-    setLocalStock(newStock);
+  const [form, setForm] = useState({
+    name: item.name,
+    stock: item.stock,
+    expiration_date:
+      item.expiration_date?.split("T")[0] || "",
+    category_name: item.category_name || "",
+    price_per_unit: item.price_per_unit,
+  });
+
+  const [saving, setSaving] = useState(false);
+
+  async function handleSave() {
+    setSaving(true);
+
     try {
       await fetch(`${BASE_URL}/inventory/${item.id}`, {
         method: "PUT",
         headers: getAuthHeaders(),
-        body: JSON.stringify({ stock: newStock }),
+        body: JSON.stringify({
+          name: form.name,
+          stock: Number(form.stock),
+          expiration_date: form.expiration_date,
+          category_name: form.category_name
+        }),
       });
+
+      setShowEdit(false);
       onUpdateStock();
-    } catch {
-      setLocalStock(item.stock);
+    } catch (err) {
+      console.error(err);
     } finally {
-      setUpdating(false);
+      setSaving(false);
     }
   }
 
   const isExpired = item.is_expired;
 
   return (
-    <div className="flex items-center gap-4 px-4 py-3.5 border-b border-[#F3F4EE] last:border-0 hover:bg-[#FAFBF6] transition-colors group">
-      {/* Initials avatar */}
-      <div className="h-12 w-12 shrink-0 rounded-xl overflow-hidden bg-[#E8EDD4] flex items-center justify-center text-[#7E8E21] text-xs font-bold">
-        {item.name?.slice(0, 2).toUpperCase()}
+    <>
+      <div className="flex items-center gap-4 px-4 py-3.5 border-b border-[#F3F4EE] last:border-0 hover:bg-[#FAFBF6] transition-colors group">
+
+        {/* Avatar */}
+        <div className="h-12 w-12 shrink-0 rounded-xl overflow-hidden bg-[#E8EDD4] flex items-center justify-center text-[#7E8E21] text-xs font-bold">
+          {item.name?.slice(0, 2).toUpperCase()}
+        </div>
+
+        {/* Name */}
+        <div className="flex-1 min-w-0">
+          <p className={`text-sm font-semibold ${isExpired ? "line-through text-[#9CA3AF]" : "text-[#2D3335]"}`}>
+            {item.name}
+          </p>
+
+          <p className="text-xs text-[#5A6062]">
+            {item.category_name}
+          </p>
+        </div>
+
+        {/* Quantity */}
+        <div className="w-28 text-sm font-semibold text-[#2D3335]">
+          {item.stock}
+        </div>
+
+        {/* Expiry */}
+        <div className="w-28 text-right">
+          <span className={`text-sm ${isExpired ? "text-red-500 font-semibold" : "text-[#2D3335]"}`}>
+            {formatDate(item.expiration_date)}
+          </span>
+        </div>
+
+        {/* Status */}
+        <div className="w-24 flex justify-end">
+          <StatusBadge item={item} />
+        </div>
+
+        {/* Actions */}
+        <div className="flex items-center gap-2 ml-2">
+          <button
+            onClick={() => setShowEdit(true)}
+            className="text-[#94A3B8] hover:text-[#4A541F] transition-colors"
+          >
+            <MdEdit size={18} />
+          </button>
+
+          <button
+            onClick={() => onDelete(item.id)}
+            className="text-[#CBD5E1] hover:text-red-400 transition-colors"
+          >
+            <MdDelete size={18} />
+          </button>
+        </div>
       </div>
 
-      {/* Name & category */}
-      <div className="flex-1 min-w-0">
-        <p className={`text-sm font-semibold ${isExpired ? "line-through text-[#9CA3AF]" : "text-[#2D3335]"}`}>
-          {item.name}
-        </p>
-        <p className="text-xs text-[#5A6062]">{item.category_name}</p>
-      </div>
+      {/* EDIT MODAL */}
+      {showEdit && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
 
-      {/* Quantity controls */}
-      <div className="flex items-center gap-2 w-28">
-        <button
-          onClick={() => changeStock(-1)}
-          disabled={updating || localStock === 0}
-          className="h-7 w-7 rounded-full border border-[#D1D9A8] flex items-center justify-center text-[#4A541F] font-bold text-sm hover:bg-[#EEF3D2] disabled:opacity-30 transition-colors"
-        >
-          −
-        </button>
-        <span className="w-5 text-center text-sm font-semibold text-[#2D3335]">{localStock}</span>
-        <button
-          onClick={() => changeStock(1)}
-          disabled={updating}
-          className="h-7 w-7 rounded-full bg-[#4A541F] flex items-center justify-center text-white hover:bg-[#3a4118] disabled:opacity-50 transition-colors"
-        >
-          <MdAdd size={14} />
-        </button>
-      </div>
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
 
-      {/* Expires */}
-      <div className="w-28 text-right">
-        <span className={`text-sm ${isExpired ? "text-red-500 font-semibold" : "text-[#2D3335]"}`}>
-          {formatDate(item.expiration_date)}
-        </span>
-      </div>
+            <h2 className="text-lg font-semibold text-[#2D3335] mb-5">
+              Edit Inventory Item
+            </h2>
 
-      {/* Status */}
-      <div className="w-24 flex justify-end">
-        <StatusBadge item={item} />
-      </div>
+            <div className="flex flex-col gap-4">
 
-      {/* Delete on hover */}
-      <button
-        onClick={() => onDelete(item.id)}
-        className="opacity-0 group-hover:opacity-100 transition-opacity ml-2 text-[#CBD5E1] hover:text-red-400"
-      >
-        <MdDelete size={18} />
-      </button>
-    </div>
+              <div>
+                <label className="text-xs font-medium text-[#5A6062] mb-1 block">
+                  Item Name
+                </label>
+
+                <input
+                  type="text"
+                  value={form.name}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      name: e.target.value,
+                    })
+                  }
+                  className="w-full rounded-xl border border-[#E5E7EB] px-4 py-3 text-sm outline-none focus:border-[#7E8E21]"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+
+                <div>
+                  <label className="text-xs font-medium text-[#5A6062] mb-1 block">
+                    Quantity
+                  </label>
+
+                  <input
+                    type="number"
+                    value={form.stock}
+                    onChange={(e) =>
+                      setForm({
+                        ...form,
+                        stock: e.target.value,
+                      })
+                    }
+                    className="w-full rounded-xl border border-[#E5E7EB] px-4 py-3 text-sm outline-none focus:border-[#7E8E21]"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs font-medium text-[#5A6062] mb-1 block">
+                    Expiry Date
+                  </label>
+
+                  <input
+                    type="date"
+                    value={form.expiration_date}
+                    onChange={(e) =>
+                      setForm({
+                        ...form,
+                        expiration_date: e.target.value,
+                      })
+                    }
+                    className="w-full rounded-xl border border-[#E5E7EB] px-4 py-3 text-sm outline-none focus:border-[#7E8E21]"
+                  />
+                </div>
+
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+
+                <div>
+                  <label className="text-xs font-medium text-[#5A6062] mb-1 block">
+                    Category ID
+                  </label>
+
+                  <select
+                    value={form.category_name}
+                    onChange={(e) =>
+                      setForm({
+                        ...form,
+                        category_name: e.target.value,
+                      })
+                    }
+                    className="w-full rounded-xl border border-[#E5E7EB] px-4 py-3 text-sm outline-none focus:border-[#7E8E21]"
+                  >
+                    <option value="Groceries">Groceries</option>
+                    <option value="Personal Care">Personal Care</option>
+                    <option value="Beverages">Beverages</option>
+                    <option value="Cleaning Supplies">Cleaning Supplies</option>
+                    <option value="Household">Household</option>
+                  </select>
+                </div>
+
+              </div>
+
+            </div>
+
+            <div className="flex gap-3 mt-6">
+
+              <button
+                onClick={() => setShowEdit(false)}
+                className="flex-1 rounded-xl border border-[#E5E7EB] py-3 text-sm font-medium text-[#475569]"
+              >
+                Cancel
+              </button>
+
+              <button
+                onClick={handleSave}
+                disabled={saving}
+                className="flex-1 rounded-xl bg-[#4A541F] py-3 text-sm font-semibold text-white"
+              >
+                {saving ? "Saving..." : "Save Changes"}
+              </button>
+
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 
