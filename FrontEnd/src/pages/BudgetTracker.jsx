@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import Sidebar from "../components/Sidebar";
+import Sidebar from "../components/sidebar";
 import { MdRestaurant, MdHome, MdSpa, MdLocalDrink, MdCleaningServices } from "react-icons/md";
 import { getToken } from "../services/authService";
 

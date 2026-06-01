@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { signUpUser } from "../api/authenticationApi";
+import { signUpUser } from "../api/authenticationAPI";
 
 import {
   validateName,
