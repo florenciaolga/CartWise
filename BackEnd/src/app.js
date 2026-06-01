@@ -15,11 +15,7 @@ const reportRoutes = require("./routes/reportRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
 
 app.use(cors({
-  origin: [
-    "http://localhost:5173",
-    "https://cartwise-murex.vercel.app",
-    "https://cartwise-5xi2dc4u-feliciafaustinehid-1416s-projects.vercel.app"
-  ],
+  origin: true,
   credentials: true,
 }));
 app.use(express.json());
