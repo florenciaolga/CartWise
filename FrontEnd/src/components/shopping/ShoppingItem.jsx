@@ -1,6 +1,7 @@
 import { rupiah } from "../../utils/formatter";
+import { MdDelete } from "react-icons/md";
 
-export default function ShoppingItem({ item, onToggle, onQuantityChange }) {
+export default function ShoppingItem({ item, onToggle, onQuantityChange, onDelete }) {
   const isPurchased = item.is_purchased;
 
   return (
@@ -24,6 +25,7 @@ export default function ShoppingItem({ item, onToggle, onQuantityChange }) {
           </svg>
         )}
       </button>
+      
 
       <div className="flex-1 min-w-0">
         <p className={`font-semibold text-[#2D3335] truncate ${isPurchased ? "line-through text-[#9aa0a6]" : ""}`}>
@@ -56,12 +58,30 @@ export default function ShoppingItem({ item, onToggle, onQuantityChange }) {
           </button>
         </div>
       )}
+    
+      <div className="flex items-center gap-3">
 
-      <div className="text-right min-w-[80px]">
-        <p className="text-[10px] font-medium uppercase tracking-wide text-[#9aa0a6]">EST. PRICE</p>
-        <p className={`text-sm font-bold ${isPurchased ? "text-[#9aa0a6]" : "text-[#7E8E21]"}`}>
-          {rupiah(item.total_price)}
-        </p>
+        <div className="text-right min-w-[80px]">
+          <p className="text-[10px] font-medium uppercase tracking-wide text-[#9aa0a6]">
+            EST. PRICE
+          </p>
+
+          <p className={`text-sm font-bold ${
+            isPurchased
+              ? "text-[#9aa0a6]"
+              : "text-[#7E8E21]"
+          }`}>
+            {rupiah(item.total_price)}
+          </p>
+        </div>
+
+        <button
+          onClick={() => onDelete(item.id)}
+          className="text-[#CBD5E1] hover:text-red-400 transition-colors"
+        >
+          <MdDelete size={18} />
+        </button>
+
       </div>
     </div>
   );

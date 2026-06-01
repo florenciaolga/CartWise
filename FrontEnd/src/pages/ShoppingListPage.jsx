@@ -21,7 +21,7 @@ export default function ShoppingListPage() {
     items, subtotal, totalItems, loading,
     searchQuery, setSearchQuery,
     activeCategoryId, setActiveCategoryId,
-    handleToggle, handleQuantityChange,
+    handleToggle, handleQuantityChange, handleDelete,
     refetch,
   } = useShoppingList();
 
@@ -126,6 +126,7 @@ export default function ShoppingListPage() {
                       item={item}
                       onToggle={handleToggle}
                       onQuantityChange={handleQuantityChange}
+                      onDelete={handleDelete}
                     />
                   ))
                 ) : (
@@ -144,6 +145,7 @@ export default function ShoppingListPage() {
                         item={item}
                         onToggle={handleToggle}
                         onQuantityChange={handleQuantityChange}
+                        onDelete={handleDelete}
                       />
                     ))}
                   </div>
