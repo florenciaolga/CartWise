@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import Sidebar from "../components/sidebar";
 import { MdRestaurant, MdTrendingUp, MdTrendingDown, MdChevronRight } from "react-icons/md";
 
-const BASE_URL = "http://localhost:3000/api";
+const BASE_URL =`${import.meta.env.VITE_API_URL}/api`;
 
 function getAuthHeaders() {
   const token = localStorage.getItem("token");

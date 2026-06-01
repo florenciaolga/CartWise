@@ -4,7 +4,7 @@ import Sidebar from "../components/sidebar";
 import { MdLogout, MdCheck } from "react-icons/md";
 import { getUser as getStoredUser, getToken, clearSession } from "../services/authService";
 
-const BASE_URL = "http://localhost:3000/api";
+const BASE_URL =`${import.meta.env.VITE_API_URL}/api`;
 
 function getAuthHeaders() {
   return {

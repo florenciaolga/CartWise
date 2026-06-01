@@ -3,7 +3,7 @@ import Sidebar from "../components/sidebar";
 import { MdRestaurant, MdHome, MdSpa, MdLocalDrink, MdCleaningServices } from "react-icons/md";
 import { getToken } from "../services/authService";
 
-const BASE_URL = "http://localhost:3000/api";
+const BASE_URL =`${import.meta.env.VITE_API_URL}/api`;
 
 function getAuthHeaders() {
   return {
