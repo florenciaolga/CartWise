@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import Sidebar from "../components/Sidebar";
+import Sidebar from "../components/sidebaridebar";
 import { MdLogout, MdCheck } from "react-icons/md";
 import { getUser as getStoredUser, getToken, clearSession } from "../services/authService";
 
